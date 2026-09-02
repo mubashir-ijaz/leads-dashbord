@@ -225,8 +225,9 @@
     <div class="auto-note" id="autoNote">
       Clicks the chosen button on the leads currently shown (respects the filters &amp; sort below),
       from row <b>From&nbsp;#</b> to <b>To&nbsp;#</b>, one every few seconds — e.g. From&nbsp;30
-      To&nbsp;50. Opens each in one reused tab (leave it open beside this one). The first Start may
-      need you to <b>allow pop-ups for this site</b> — then click Start again. <b>Stop</b> halts at once.
+      To&nbsp;50. Opens each in its own new tab, exactly like clicking the button by hand.
+      <b>Allow pop-ups for this site</b> the first time (address-bar icon → Always allow) or the
+      browser blocks all but the first. <b>Stop</b> halts at once.
     </div>
   </section>
 
@@ -550,7 +551,7 @@
     return num ? "tel:"+num : "";
   }
   function channelLink(l, ch){
-    if(ch==="wa")   return waWebLink(l);
+    if(ch==="wa")   return waLink(l);
     if(ch==="fb")   return fbLink(l);
     if(ch==="ig")   return igLink(l);
     if(ch==="li")   return liLink(l);
@@ -681,7 +682,7 @@
   }
 
   // ---------- auto-click ----------
-  var autoTimer = null, autoRunning = false, autoWin = null;
+  var autoTimer = null, autoRunning = false;
 
   function autoSetRunning(on){
     autoRunning = on;
@@ -702,15 +703,12 @@
     render();
   }
 
-  // Open the next lead in the ONE reused tab. If that tab is still alive we just
-  // point it at the new URL (not pop-up-blocked); if the page closed itself
-  // (wa.me hands off to the app and does that) we open a fresh named tab.
+  // Open one lead exactly like clicking its button on the card: a new tab to the
+  // wa.me link. (You must "Allow pop-ups for this site" once, or the browser
+  // blocks the ones fired on the timer.)
   function autoOpen(href){
-    try{
-      if(autoWin && !autoWin.closed){ autoWin.location.href = href; return true; }
-    }catch(e){ /* cross-origin .closed can throw in rare cases - fall through */ }
-    autoWin = window.open(href, "lead_outreach");
-    return !!autoWin;
+    var w = window.open(href, "_blank");
+    return !!w;
   }
 
   function wireAuto(){
@@ -728,13 +726,6 @@
 
       var queue = list.slice(from - 1, to);
       var mark  = $("#autoMark").checked;
-
-      // grab the reused tab now, while we still have the click gesture
-      autoWin = window.open("about:blank", "lead_outreach");
-      if(!autoWin){
-        $("#autoStatus").textContent = "pop-up blocked — allow pop-ups for this site, then Start again";
-        return;
-      }
 
       autoSetRunning(true);
       var i = 0, opened = 0, skipped = 0, failStreak = 0;
