@@ -42,6 +42,7 @@ def main():
                     help='only this segment (repeatable): "No website" / "Low rating"')
     ap.add_argument("--ignore-checked", action="store_true",
                     help="send even to numbers not verified by check_whatsapp.py")
+    ap.add_argument("--yes", action="store_true", help='skip the "go" confirmation')
     args = ap.parse_args()
 
     if not config.LEADS_XLSX.exists():
@@ -92,9 +93,10 @@ def main():
 
     print(f"\nAbout to send {len(batch)} messages, "
           f"{config.MIN_DELAY_SECONDS}-{config.MAX_DELAY_SECONDS}s apart.")
-    if input('Type "go" to start: ').strip().lower() != "go":
-        print("Cancelled.")
-        return
+    if not args.yes:
+        if input('Type "go" to start: ').strip().lower() != "go":
+            print("Cancelled.")
+            return
 
     driver = wa_web.make_driver()
     sent = failed = 0

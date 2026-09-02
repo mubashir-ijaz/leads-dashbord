@@ -38,12 +38,29 @@ A Chrome window opens on WhatsApp Web. **First run only:** scan the QR code with
 your phone (WhatsApp → Linked devices → Link a device). Login is saved in
 `./chrome_profile`, so later runs skip the QR. Type `go` when prompted.
 
+Each line shows a running tally, e.g.:
+
+```
+[ 12/389] +14134435661  FairBridge Inn Express    ON WhatsApp     | on WA 3 / 12  (25%)  | ETA  71m
+```
+
 It writes:
 - **`whatsapp_numbers.csv`** — numbers confirmed on WhatsApp (the send list)
 - **`not_on_whatsapp.csv`** — numbers WhatsApp rejected
 
 Stop with `Ctrl+C` any time; checked numbers are skipped next run. Run
 `check_whatsapp.py --recheck` to re-test everything.
+
+Check progress at any point without opening a browser:
+
+```bash
+python check_whatsapp.py --summary
+```
+
+> The **WhatsApp desktop app** login does not carry over — this script uses
+> WhatsApp Web in its own Chrome profile, so you scan the QR once in the window
+> it opens. After that `./chrome_profile` remembers it.
+> Add `--yes` to skip the `go` prompt once you trust it.
 
 ## Step 2 — preview the messages
 
