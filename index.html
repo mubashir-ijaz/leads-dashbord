@@ -516,12 +516,22 @@
     $("#kpis").innerHTML = html;
   }
 
-  function waLink(l){
+  function waNumber(l){
     var num = (l.whatsapp.match(/\d+/g)||[]).join("");
     if(!num && l.phone) num = (l.phone.match(/\d+/g)||[]).join("");
     if(!num) return "";
     if(num.length===10) num = "1"+num; // assume US
-    return "https://wa.me/"+num+"?text="+encodeURIComponent(buildMessage(l));
+    return num;
+  }
+  function waLink(l){
+    var num = waNumber(l);
+    return num ? "https://wa.me/"+num+"?text="+encodeURIComponent(buildMessage(l)) : "";
+  }
+  // For the auto-clicker: open WhatsApp Web directly. wa.me hands off to the
+  // desktop app and closes its own tab, which breaks the reused-tab loop.
+  function waWebLink(l){
+    var num = waNumber(l);
+    return num ? "https://web.whatsapp.com/send?phone="+num+"&text="+encodeURIComponent(buildMessage(l)) : "";
   }
   function fbLink(l){ return l.facebook ? (/^https?:/.test(l.facebook)?l.facebook:"https://"+l.facebook) : ""; }
   function igLink(l){
@@ -540,7 +550,7 @@
     return num ? "tel:"+num : "";
   }
   function channelLink(l, ch){
-    if(ch==="wa")   return waLink(l);
+    if(ch==="wa")   return waWebLink(l);
     if(ch==="fb")   return fbLink(l);
     if(ch==="ig")   return igLink(l);
     if(ch==="li")   return liLink(l);
@@ -692,18 +702,15 @@
     render();
   }
 
-  // Navigate the one reused tab. Setting .location.href on a window we opened is
-  // NOT blocked by the pop-up blocker (unlike repeated window.open from a timer).
+  // Open the next lead in the ONE reused tab. If that tab is still alive we just
+  // point it at the new URL (not pop-up-blocked); if the page closed itself
+  // (wa.me hands off to the app and does that) we open a fresh named tab.
   function autoOpen(href){
-    if(!autoWin || autoWin.closed){
-      autoWin = window.open(href, "lead_outreach");   // (re)create if user closed it
-      return !!autoWin;
-    }
-    try{ autoWin.location.href = href; return true; }
-    catch(e){
-      autoWin = window.open(href, "lead_outreach");
-      return !!autoWin;
-    }
+    try{
+      if(autoWin && !autoWin.closed){ autoWin.location.href = href; return true; }
+    }catch(e){ /* cross-origin .closed can throw in rare cases - fall through */ }
+    autoWin = window.open(href, "lead_outreach");
+    return !!autoWin;
   }
 
   function wireAuto(){
@@ -730,7 +737,7 @@
       }
 
       autoSetRunning(true);
-      var i = 0, opened = 0, skipped = 0;
+      var i = 0, opened = 0, skipped = 0, failStreak = 0;
       (function step(){
         if(!autoRunning) return;
         if(i >= queue.length){
@@ -742,22 +749,29 @@
         var href = channelLink(l, ch);
         i++;
         var wait = delay * 1000;
+        var note;
         if(href){
           var ok = autoOpen(href);
           var id = leadId(l);
           log[id + "::" + ch] = true;
           if(mark) done[id] = true;
           save();
-          opened++;
-          if(!ok){ autoStop("tab closed — reopen it and Start again from row " + rowNo); return; }
+          if(ok){ opened++; failStreak = 0; note = "(opened " + opened + ")"; }
+          else {
+            failStreak++;
+            note = "(pop-up blocked ×" + failStreak + ")";
+            if(failStreak >= 5){
+              autoStop("stopped — pop-ups are blocked. Allow pop-ups for this site, then Start again from row " + rowNo);
+              return;
+            }
+          }
         } else {
           skipped++;
           wait = 250;                       // fly past leads with no such link
+          note = "(no " + ch + ", skipped)";
         }
         $("#autoBar").querySelector("i").style.width = Math.round(i / queue.length * 100) + "%";
-        $("#autoStatus").textContent =
-          rowNo + " / " + to + " · " + (l.name || "—") +
-          (href ? ("  (opened " + opened + ")") : ("  (no " + ch + ", skipped)"));
+        $("#autoStatus").textContent = rowNo + " / " + to + " · " + (l.name || "—") + "  " + note;
         autoTimer = setTimeout(step, wait);
       })();
     });
