@@ -1,0 +1,68 @@
+"""
+Settings for the WhatsApp sender. Edit the values here - you should not need to
+touch send_whatsapp.py.
+"""
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+PROJECT = HERE.parent
+
+# ---------------------------------------------------------------------------
+# Where the leads come from
+# ---------------------------------------------------------------------------
+# Default: the Excel file that sits next to this project.
+LEADS_XLSX = PROJECT / "leads_20260827_160011.xlsx"
+
+# Column names in that sheet (change only if your export uses different headers)
+COL_NAME      = "Name"
+COL_CATEGORY  = "Category"
+COL_RATING    = "Rating"
+COL_REVIEWS   = "Reviews"
+COL_WHATSAPP  = "WhatsApp"
+COL_PHONE     = "Phone"
+COL_CITY      = "City"
+COL_STATE     = "State"
+COL_WHYKEPT   = "Why kept"
+
+# ---------------------------------------------------------------------------
+# The pitch - same tokens as the dashboard:
+#   {name} {category} {city} {state} {reason}
+# {reason} is filled automatically from the lead's segment.
+# ---------------------------------------------------------------------------
+PITCH_TEMPLATE = (
+    "Hi {name} team! I noticed {reason}. I build fast, modern, mobile-friendly "
+    "websites for {category}s that bring in more calls and bookings from Google. "
+    "I'd love to send you a free homepage mockup - no cost, no obligation. "
+    "Would that be OK?"
+)
+
+REASON_NO_WEBSITE = "your business doesn't have its own website yet"
+REASON_LOW_RATING = "a few tough reviews lately"
+REASON_DEFAULT    = "your online presence could pull in more customers"
+
+# ---------------------------------------------------------------------------
+# Which leads to message
+# ---------------------------------------------------------------------------
+SEGMENTS_TO_SEND = ["No website", "Low rating"]   # remove one to skip it
+MIN_REVIEWS = 0        # skip leads with fewer than this many reviews
+SKIP_RATING_ABOVE = None   # e.g. 4.5 to only message weaker listings; None = no cap
+
+# ---------------------------------------------------------------------------
+# Sending behaviour  (keep it slow - WhatsApp bans bulk senders)
+# ---------------------------------------------------------------------------
+DEFAULT_COUNTRY_CODE = "1"    # prepended to bare 10-digit numbers (US = 1)
+STRICT_US_NUMBERS = True      # True: only accept 10-digit or 1+10-digit numbers,
+                              # skip anything malformed (this dataset is US/PR).
+                              # Set False if you add international leads.
+MIN_DELAY_SECONDS = 25        # random pause between messages
+MAX_DELAY_SECONDS = 55
+BATCH_LIMIT = 25             # max messages per run; override with --limit / --all
+SEND_TIMEOUT = 45            # seconds to wait for the chat + send button to load
+
+# ---------------------------------------------------------------------------
+# Files (all created next to this script)
+# ---------------------------------------------------------------------------
+SENT_LOG    = HERE / "sent_log.csv"       # numbers already messaged (resume list)
+FAILED_LOG  = HERE / "failed_log.csv"     # numbers that errored / were invalid
+PREVIEW_CSV = HERE / "preview.csv"        # written by --dry-run so you can review
+CHROME_PROFILE_DIR = HERE / "chrome_profile"   # keeps you logged in to WhatsApp Web

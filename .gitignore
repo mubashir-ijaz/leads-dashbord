@@ -3,3 +3,11 @@
 node_modules/
 *.log
 .DS_Store
+
+# whatsapp_sender runtime files
+whatsapp_sender/chrome_profile/
+whatsapp_sender/sent_log.csv
+whatsapp_sender/failed_log.csv
+whatsapp_sender/preview.csv
+__pycache__/
+*.pyc
