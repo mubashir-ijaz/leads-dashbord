@@ -201,7 +201,7 @@
     <div class="auto-controls">
       <label>Button
         <select id="autoChannel">
-          <option value="wa">WhatsApp (desktop app)</option>
+          <option value="wa">WhatsApp</option>
           <option value="fb">Facebook</option>
           <option value="ig">Instagram</option>
           <option value="li">LinkedIn</option>
@@ -223,11 +223,11 @@
     </div>
     <div class="auto-bar" id="autoBar"><i></i></div>
     <div class="auto-note" id="autoNote">
-      Goes through the leads currently shown (respects the filters &amp; sort below), from row
-      <b>From&nbsp;#</b> to <b>To&nbsp;#</b>, one every few seconds — e.g. From&nbsp;30 To&nbsp;50.
-      <b>WhatsApp</b> opens each chat straight in your <b>desktop app</b> (no browser tab); the first
-      time Chrome asks “Open WhatsApp?” — tick <b>Always allow</b>. Facebook/Instagram/LinkedIn/Email
-      open in a tab instead, so allow pop-ups for those. <b>Stop</b> halts at once.
+      Does the same as clicking the button on each card by hand — goes through the leads currently
+      shown (respects the filters &amp; sort below), from row <b>From&nbsp;#</b> to <b>To&nbsp;#</b>,
+      opening one every few seconds (e.g. From&nbsp;30 To&nbsp;50). <b>You must allow pop-ups for this
+      site</b> — otherwise the browser only lets the first one through. It stops with instructions if
+      that happens. <b>Stop</b> halts at once.
     </div>
   </section>
 
@@ -702,20 +702,8 @@
     render();
   }
 
-  // Fire an app deep-link (whatsapp://…) via a throwaway <a> click. The OS grabs
-  // it and opens the WhatsApp desktop app; the dashboard page never moves and
-  // there's no pop-up to block.
-  function launchApp(url){
-    var a = document.createElement("a");
-    a.href = url;
-    a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function(){ try{ a.remove(); }catch(e){} }, 200);
-    return true;
-  }
-
-  // Web channels still open in a new tab (needs pop-ups allowed for this site).
+  // Exactly what clicking the card button does: open the link in a new tab.
+  // For WhatsApp that's wa.me/<number>, which then opens your WhatsApp app.
   function autoOpen(href){
     return !!window.open(href, "_blank");
   }
@@ -737,7 +725,7 @@
       var mark  = $("#autoMark").checked;
 
       autoSetRunning(true);
-      var i = 0, opened = 0, skipped = 0, failStreak = 0;
+      var i = 0, opened = 0, skipped = 0;
       (function step(){
         if(!autoRunning) return;
         if(i >= queue.length){
@@ -746,26 +734,23 @@
         }
         var l = queue[i];
         var rowNo = from + i;
-        var isApp = (ch === "wa");
-        var href  = isApp ? waAppLink(l) : channelLink(l, ch);
+        var href = channelLink(l, ch);
         i++;
-        var wait = delay * 1000;
-        var note;
+        var wait = delay * 1000, note;
         if(href){
-          var ok = isApp ? launchApp(href) : autoOpen(href);
+          var ok = autoOpen(href);
+          if(!ok){
+            // browser refused to open the tab -> pop-ups are blocked
+            autoStop("⚠ Pop-ups blocked. Click the blocked-pop-up icon at the right of the "
+              + "address bar → \"Always allow\" → then press Start again (From " + rowNo + ").");
+            return;
+          }
           var id = leadId(l);
           log[id + "::" + ch] = true;
           if(mark) done[id] = true;
           save();
-          if(ok){ opened++; failStreak = 0; note = isApp ? "(sent to WhatsApp app · " + opened + ")" : "(opened " + opened + ")"; }
-          else {
-            failStreak++;
-            note = "(pop-up blocked ×" + failStreak + ")";
-            if(failStreak >= 5){
-              autoStop("stopped — pop-ups are blocked. Allow pop-ups for this site, then Start again from row " + rowNo);
-              return;
-            }
-          }
+          opened++;
+          note = "(opened " + opened + ")";
         } else {
           skipped++;
           wait = 250;                       // fly past leads with no such link
