@@ -11,5 +11,6 @@ whatsapp_sender/failed_log.csv
 whatsapp_sender/preview.csv
 whatsapp_sender/whatsapp_numbers.csv
 whatsapp_sender/not_on_whatsapp.csv
+whatsapp_sender/candidate_numbers.csv
 __pycache__/
 *.pyc
