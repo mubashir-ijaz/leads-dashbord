@@ -1,0 +1,695 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Leads Outreach Dashboard</title>
+<style>
+  :root{
+    --bg:#0f1216; --panel:#171b21; --panel-2:#1d222a; --line:#2a313c;
+    --text:#e8ecf1; --muted:#9aa4b2; --muted-2:#6b7583;
+    --brand:#4f8cff; --brand-ink:#0c1220;
+    --wa:#25d366; --fb:#1877f2; --ig:#e1306c; --li:#0a66c2; --mail:#f59e0b; --call:#22c55e; --maps:#8b5cf6;
+    --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    --chip:#232a33; --radius:14px;
+    --shadow:0 6px 24px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:linear-gradient(180deg,#0d1015,#0f1216 240px);
+    color:var(--text);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--brand);text-decoration:none}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  input,select,textarea{font:inherit;color:inherit}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 20px 80px}
+
+  /* ---------- Header ---------- */
+  header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+  .logo{
+    width:38px;height:38px;border-radius:11px;flex:none;
+    background:radial-gradient(120% 120% at 20% 10%,#6ea8ff,#2f6bd8);
+    display:grid;place-items:center;font-weight:800;color:#fff;box-shadow:var(--shadow)
+  }
+  .title h1{margin:0;font-size:18px;letter-spacing:.2px}
+  .title p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+  .top .spacer{flex:1}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text);font-weight:600;
+    transition:.15s;white-space:nowrap
+  }
+  .btn:hover{border-color:#3a4553;background:#222833}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:6px 10px;font-size:12.5px;border-radius:8px}
+
+  /* ---------- KPIs ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .kpi .n{font-size:22px;font-weight:800;letter-spacing:.3px}
+  .kpi .l{color:var(--muted);font-size:12px;margin-top:2px}
+  .kpi.accent .n{color:var(--brand)}
+  .kpi.good .n{color:var(--good)}
+  .kpi.warn .n{color:var(--warn)}
+
+  /* ---------- Pitch box ---------- */
+  .pitch{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px}
+  .pitch .row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .pitch h3{margin:0;font-size:13px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+  .pitch textarea{
+    width:100%;min-height:78px;resize:vertical;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;color:var(--text)
+  }
+  .tokens{color:var(--muted-2);font-size:12px;margin-top:6px}
+  .tokens code{background:var(--chip);padding:1px 6px;border-radius:6px;color:var(--muted)}
+
+  /* ---------- Filters ---------- */
+  .filters{
+    position:sticky;top:0;z-index:20;background:rgba(15,18,22,.86);backdrop-filter:blur(8px);
+    border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:16px;
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center
+  }
+  .seg{display:flex;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:4px}
+  .seg button{padding:7px 12px;border-radius:8px;color:var(--muted);font-weight:700;font-size:12.5px}
+  .seg button.on{background:var(--brand);color:#fff}
+  .filters select,.filters input[type=search]{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:130px
+  }
+  .filters input[type=search]{min-width:200px;flex:1}
+  .toggle{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:12.5px;user-select:none}
+  .count-note{color:var(--muted);font-size:12.5px;margin-left:auto}
+
+  /* ---------- Cards ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:15px;
+    display:flex;flex-direction:column;gap:11px;transition:.15s
+  }
+  .card:hover{border-color:#39434f}
+  .card.done{opacity:.55}
+  .card .head{display:flex;gap:10px;align-items:flex-start}
+  .card .name{font-weight:800;font-size:15px;line-height:1.3}
+  .card .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .badges{display:flex;gap:6px;flex-wrap:wrap}
+  .b{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .b.seg-nw{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#ffcf7a}
+  .b.seg-lr{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.35);color:#ffb0b0}
+  .b.rate{background:rgba(79,140,255,.12);border-color:rgba(79,140,255,.35);color:#a9c7ff}
+  .b.cat{background:var(--chip)}
+  .preview{
+    background:var(--panel-2);border:1px dashed var(--line);border-radius:10px;padding:9px 11px;
+    color:var(--muted);font-size:12.5px;white-space:pre-wrap;max-height:96px;overflow:auto
+  }
+  .actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+  .a{
+    display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:9px;font-weight:700;font-size:12.5px;
+    border:1px solid var(--line);background:var(--panel-2);color:var(--text)
+  }
+  .a:hover{filter:brightness(1.12)}
+  .a .dot{width:8px;height:8px;border-radius:50%}
+  .a.wa .dot{background:var(--wa)} .a.fb .dot{background:var(--fb)} .a.ig .dot{background:var(--ig)}
+  .a.li .dot{background:var(--li)} .a.mail .dot{background:var(--mail)} .a.call .dot{background:var(--call)}
+  .a.maps .dot{background:var(--maps)}
+  .a.used{outline:2px solid rgba(34,197,94,.5);color:#bff3ce}
+  .card .foot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:4px;border-top:1px solid var(--line)}
+  .chk{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:12.5px;user-select:none}
+  .card .foot .spacer{flex:1}
+  .link-min{color:var(--muted-2);font-size:12px}
+  .link-min:hover{color:var(--brand)}
+
+  .empty{padding:60px 20px;text-align:center;color:var(--muted)}
+
+  /* ---------- Modal ---------- */
+  .modal-bg{position:fixed;inset:0;background:rgba(4,6,10,.66);display:none;place-items:center;z-index:100;padding:20px}
+  .modal-bg.on{display:grid}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;max-width:560px;width:100%;padding:20px;box-shadow:var(--shadow)}
+  .modal h2{margin:0 0 4px;font-size:16px}
+  .modal p.d{margin:0 0 14px;color:var(--muted);font-size:12.5px}
+  .drop{
+    border:2px dashed var(--line);border-radius:12px;padding:26px;text-align:center;color:var(--muted);
+    background:var(--panel-2);transition:.15s;cursor:pointer
+  }
+  .drop.hot{border-color:var(--brand);color:var(--text);background:#1a2230}
+  .modal .rowbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .modal .msg{margin-top:12px;font-size:12.5px;color:var(--muted)}
+  .modal .msg.ok{color:var(--good)} .modal .msg.err{color:var(--bad)}
+
+  @media(max-width:900px){ .kpis{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:560px){ .grid{grid-template-columns:1fr} .filters input[type=search]{min-width:100%} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="logo">L</div>
+    <div class="title">
+      <h1>Leads Outreach Dashboard</h1>
+      <p id="srcNote">Loading…</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="btnImport">⬆ Import Excel / CSV</button>
+    <button class="btn ghost" id="btnExport">⬇ Backup</button>
+    <button class="btn ghost" id="btnReset">↺ Reset</button>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="pitch">
+    <div class="row">
+      <h3>Pitch template</h3>
+      <span class="spacer" style="flex:1"></span>
+      <button class="btn sm ghost" id="btnPitchReset">Reset text</button>
+    </div>
+    <textarea id="pitchTpl" spellcheck="false"></textarea>
+    <div class="tokens">
+      Tokens: <code>{name}</code> <code>{category}</code> <code>{city}</code> <code>{state}</code> <code>{reason}</code> — auto-filled per lead.
+    </div>
+  </section>
+
+  <section class="filters">
+    <div class="seg" id="segFilter">
+      <button data-seg="all" class="on">All</button>
+      <button data-seg="No website">No website</button>
+      <button data-seg="Low rating">Low rating</button>
+    </div>
+    <select id="catFilter"><option value="">All categories</option></select>
+    <select id="stateFilter"><option value="">All states</option></select>
+    <select id="sortBy">
+      <option value="name">Sort: Name</option>
+      <option value="rating">Sort: Rating ↑</option>
+      <option value="reviews">Sort: Reviews ↓</option>
+      <option value="state">Sort: State</option>
+    </select>
+    <input type="search" id="search" placeholder="Search name, city, address…" />
+    <label class="toggle"><input type="checkbox" id="hideDone" /> Hide contacted</label>
+    <span class="count-note" id="countNote"></span>
+  </section>
+
+  <section class="grid" id="grid"></section>
+  <div class="empty" id="empty" style="display:none">No leads match these filters.</div>
+</div>
+
+<!-- Import modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2>Import leads</h2>
+    <p class="d">Upload an <b>.xlsx</b> or <b>.csv</b> exported from your scraper. Columns are auto-detected
+      (Name, Category, Rating, Reviews, Phone, WhatsApp, Email, Facebook, Instagram, LinkedIn, Address, City, State, Maps URL, Why kept).
+      New rows are merged with what you already have and saved in this browser.</p>
+    <div class="drop" id="drop">
+      <div style="font-size:26px">📄</div>
+      <div><b>Click to choose a file</b> or drop it here</div>
+      <div style="font-size:12px;margin-top:4px">.xlsx · .xls · .csv</div>
+    </div>
+    <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden />
+    <label class="toggle" style="margin-top:12px"><input type="checkbox" id="replaceMode" /> Replace current list instead of merging</label>
+    <div class="msg" id="importMsg"></div>
+    <div class="rowbtns">
+      <button class="btn ghost" id="btnCloseModal">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="./vendor/xlsx.full.min.js"></script>
+<script src="./data_leads.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  var LS_LEADS   = "lod_leads_v1";
+  var LS_LOG     = "lod_contactlog_v1";
+  var LS_PITCH   = "lod_pitch_v1";
+  var LS_UICHK   = "lod_done_v1";
+
+  var DEFAULT_PITCH =
+"Hi {name} team! I noticed {reason}. I build fast, modern, mobile-friendly websites for {category}s that bring in more calls and bookings from Google. I'd love to send you a free homepage mockup — no cost, no obligation. Would that be OK?";
+
+  // ---------- state ----------
+  var leads = [];
+  var log = {};     // "<id>::<channel>" -> true
+  var done = {};    // "<id>" -> true (overall contacted)
+  var pitchTpl = DEFAULT_PITCH;
+
+  var f = { seg:"all", cat:"", state:"", sort:"name", q:"", hideDone:false };
+
+  // ---------- helpers ----------
+  function $(s,el){return (el||document).querySelector(s);}
+  function $all(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]);});}
+  function get(k,def){try{var v=localStorage.getItem(k);return v==null?def:JSON.parse(v);}catch(e){return def;}}
+  function set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+  function leadId(l){
+    return (String(l.name||"").toLowerCase().replace(/\s+/g," ").trim()
+      + "|" + String(l.address||l.city||l.phone||"").toLowerCase().replace(/\s+/g," ").trim());
+  }
+
+  function reasonFor(l){
+    if(l.segment === "No website") return "your business doesn't have its own website yet";
+    if(l.segment === "Low rating"){
+      var r = (l.rating!=null? (" ("+l.rating+"★)"):"" );
+      return "a few tough reviews lately"+r;
+    }
+    return "your online presence could pull in more customers";
+  }
+
+  function buildMessage(l){
+    var m = pitchTpl;
+    m = m.replace(/\{name\}/g, l.name||"there");
+    m = m.replace(/\{category\}/g, (l.category||"business").toLowerCase());
+    m = m.replace(/\{city\}/g, l.city||"");
+    m = m.replace(/\{state\}/g, l.state||"");
+    m = m.replace(/\{reason\}/g, reasonFor(l));
+    return m.replace(/\s{2,}/g," ").trim();
+  }
+
+  // ---------- normalisation for imports ----------
+  var COLMAP = {
+    name:["name","business","business name","company","title"],
+    category:["category","type","business type","niche"],
+    rating:["rating","stars","score","google rating"],
+    reviews:["reviews","review count","reviews count","number of reviews","ratings"],
+    hasWebsite:["has website","website?","website status"],
+    website:["website","site","url","web"],
+    phone:["phone","telephone","tel","phone number","mobile"],
+    whatsapp:["whatsapp","wa","whatsapp link","wa link"],
+    email:["email","e-mail","mail","email address"],
+    facebook:["facebook","fb","facebook url","facebook link","facebook page"],
+    instagram:["instagram","ig","instagram url","insta"],
+    linkedin:["linkedin","linked in","linkedin url","linkedin page"],
+    address:["address","full address","street address","location"],
+    city:["city","town"],
+    state:["state","region","province"],
+    maps:["maps url","google maps","map url","maps","gmaps","google maps url"],
+    whyKept:["why kept","reason","note","notes","segment reason"]
+  };
+
+  function normHeader(h){ return String(h||"").toLowerCase().replace(/[_\-.]+/g," ").replace(/\s+/g," ").trim(); }
+
+  function detectMap(headers){
+    var norm = headers.map(normHeader);
+    var out = {};
+    Object.keys(COLMAP).forEach(function(key){
+      var cands = COLMAP[key];
+      for(var i=0;i<norm.length;i++){
+        if(cands.indexOf(norm[i])>-1){ out[key]=headers[i]; return; }
+      }
+      // loose contains
+      for(var j=0;j<norm.length;j++){
+        for(var k=0;k<cands.length;k++){
+          if(norm[j].indexOf(cands[k])>-1){ out[key]=headers[j]; return; }
+        }
+      }
+    });
+    return out;
+  }
+
+  function segmentOf(whyKept, rating){
+    var wk = String(whyKept||"").toLowerCase();
+    if(wk.indexOf("no website")>-1 || wk.indexOf("social page only")>-1 || wk.indexOf("social")>-1) return "No website";
+    if(wk.indexOf("low rating")>-1) return "Low rating";
+    if(typeof rating === "number" && rating>0 && rating < 4.2) return "Low rating";
+    return "No website";
+  }
+
+  function toNum(v){
+    if(v==null||v==="") return null;
+    var n = parseFloat(String(v).replace(/[^0-9.\-]/g,""));
+    return isNaN(n)?null:n;
+  }
+  function toInt(v){ var n=toNum(v); return n==null?0:Math.round(n); }
+
+  function rowsToLeads(rows){
+    if(!rows.length) return [];
+    var headers = Object.keys(rows[0]);
+    var map = detectMap(headers);
+    if(!map.name) map.name = headers[0];
+    return rows.map(function(r){
+      function g(key){ return map[key]!=null ? r[map[key]] : ""; }
+      var rating = toNum(g("rating"));
+      var wk = String(g("whyKept")||"").trim();
+      var l = {
+        name:String(g("name")||"").trim(),
+        category:String(g("category")||"").trim(),
+        rating:rating,
+        reviews:toInt(g("reviews")),
+        hasWebsite:String(g("hasWebsite")||"").trim(),
+        website:String(g("website")||"").trim(),
+        phone:String(g("phone")||"").trim(),
+        whatsapp:String(g("whatsapp")||"").trim(),
+        email:String(g("email")||"").trim(),
+        facebook:String(g("facebook")||"").trim(),
+        instagram:String(g("instagram")||"").trim(),
+        linkedin:String(g("linkedin")||"").trim(),
+        address:String(g("address")||"").trim(),
+        city:String(g("city")||"").trim(),
+        state:String(g("state")||"").trim().toUpperCase().slice(0,3),
+        maps:String(g("maps")||"").trim(),
+        whyKept:wk
+      };
+      l.segment = segmentOf(wk, rating);
+      return l;
+    }).filter(function(l){ return l.name; });
+  }
+
+  function mergeLeads(base, incoming, replace){
+    if(replace) return incoming.slice();
+    var byId = {};
+    base.forEach(function(l){ byId[leadId(l)] = l; });
+    incoming.forEach(function(l){
+      var id = leadId(l);
+      if(byId[id]){ // fill blanks only
+        var cur = byId[id];
+        Object.keys(l).forEach(function(k){ if(!cur[k] && l[k]) cur[k]=l[k]; });
+      } else {
+        byId[id] = l; base.push(l);
+      }
+    });
+    return base;
+  }
+
+  // ---------- persistence ----------
+  function save(){
+    set(LS_LEADS, leads);
+    set(LS_LOG, log);
+    set(LS_UICHK, done);
+    set(LS_PITCH, pitchTpl);
+  }
+
+  function loadState(){
+    var stored = get(LS_LEADS, null);
+    if(stored && stored.length){
+      leads = stored;
+    } else {
+      var d = (window.DEFAULT_LEADS && window.DEFAULT_LEADS.leads) || [];
+      leads = d.map(function(l){ return Object.assign({}, l); });
+    }
+    log  = get(LS_LOG, {}) || {};
+    done = get(LS_UICHK, {}) || {};
+    pitchTpl = get(LS_PITCH, DEFAULT_PITCH) || DEFAULT_PITCH;
+  }
+
+  // ---------- rendering ----------
+  function uniqSorted(key){
+    var s = {};
+    leads.forEach(function(l){ if(l[key]) s[l[key]]=1; });
+    return Object.keys(s).sort();
+  }
+
+  function fillSelectors(){
+    var cat = $("#catFilter"), st = $("#stateFilter");
+    var cv = cat.value, sv = st.value;
+    cat.innerHTML = '<option value="">All categories</option>';
+    uniqSorted("category").forEach(function(c){
+      var o=document.createElement("option"); o.value=c; o.textContent=c; cat.appendChild(o);
+    });
+    st.innerHTML = '<option value="">All states</option>';
+    uniqSorted("state").forEach(function(c){
+      var o=document.createElement("option"); o.value=c; o.textContent=c; st.appendChild(o);
+    });
+    cat.value = cv; st.value = sv;
+  }
+
+  function applyFilters(){
+    var q = f.q.toLowerCase();
+    var out = leads.filter(function(l){
+      if(f.seg!=="all" && l.segment!==f.seg) return false;
+      if(f.cat && l.category!==f.cat) return false;
+      if(f.state && l.state!==f.state) return false;
+      if(f.hideDone && done[leadId(l)]) return false;
+      if(q){
+        var hay = (l.name+" "+l.city+" "+l.address+" "+l.category+" "+l.state).toLowerCase();
+        if(hay.indexOf(q)===-1) return false;
+      }
+      return true;
+    });
+    out.sort(function(a,b){
+      switch(f.sort){
+        case "rating":  return (a.rating||99)-(b.rating||99);
+        case "reviews": return (b.reviews||0)-(a.reviews||0);
+        case "state":   return String(a.state).localeCompare(b.state) || String(a.name).localeCompare(b.name);
+        default:        return String(a.name).localeCompare(b.name);
+      }
+    });
+    return out;
+  }
+
+  function kpis(){
+    var total = leads.length;
+    var nw = leads.filter(function(l){return l.segment==="No website";}).length;
+    var lr = leads.filter(function(l){return l.segment==="Low rating";}).length;
+    var contacted = leads.filter(function(l){return done[leadId(l)];}).length;
+    var remaining = total - contacted;
+    var html = [
+      ['accent', total, 'Total leads'],
+      ['warn', nw, 'No website'],
+      ['', lr, 'Low rating'],
+      ['good', contacted, 'Contacted'],
+      ['', remaining, 'Remaining']
+    ].map(function(k){
+      return '<div class="kpi '+k[0]+'"><div class="n">'+k[1]+'</div><div class="l">'+k[2]+'</div></div>';
+    }).join("");
+    $("#kpis").innerHTML = html;
+  }
+
+  function waLink(l){
+    var num = (l.whatsapp.match(/\d+/g)||[]).join("");
+    if(!num && l.phone) num = (l.phone.match(/\d+/g)||[]).join("");
+    if(!num) return "";
+    if(num.length===10) num = "1"+num; // assume US
+    return "https://wa.me/"+num+"?text="+encodeURIComponent(buildMessage(l));
+  }
+  function fbLink(l){ return l.facebook ? (/^https?:/.test(l.facebook)?l.facebook:"https://"+l.facebook) : ""; }
+  function igLink(l){
+    if(!l.instagram) return "";
+    if(/^https?:/.test(l.instagram)) return l.instagram;
+    return "https://instagram.com/"+l.instagram.replace(/^@/,"");
+  }
+  function liLink(l){ return l.linkedin ? (/^https?:/.test(l.linkedin)?l.linkedin:"https://"+l.linkedin) : ""; }
+  function mailLink(l){
+    if(!l.email) return "";
+    var subj = "Quick idea for "+(l.name||"your business");
+    return "mailto:"+l.email+"?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(buildMessage(l));
+  }
+  function telLink(l){
+    var num = (l.phone.match(/[\d+]+/g)||[]).join("");
+    return num ? "tel:"+num : "";
+  }
+
+  function actionBtn(cls,label,href,id,ch){
+    if(!href) return "";
+    var used = log[id+"::"+ch] ? " used" : "";
+    return '<a class="a '+cls+used+'" target="_blank" rel="noopener" href="'+esc(href)+
+           '" data-id="'+esc(id)+'" data-ch="'+ch+'"><span class="dot"></span>'+label+'</a>';
+  }
+
+  function card(l){
+    var id = leadId(l);
+    var isDone = !!done[id];
+    var segCls = l.segment==="No website" ? "seg-nw" : "seg-lr";
+    var stars = l.rating!=null ? ("★ "+l.rating+" · "+ (l.reviews||0) +" rev") : "no rating";
+    var loc = [l.city, l.state].filter(Boolean).join(", ");
+
+    var acts =
+      actionBtn("wa","WhatsApp", waLink(l), id, "wa") +
+      actionBtn("fb","Facebook", fbLink(l), id, "fb") +
+      actionBtn("ig","Instagram", igLink(l), id, "ig") +
+      actionBtn("li","LinkedIn", liLink(l), id, "li") +
+      actionBtn("mail","Email", mailLink(l), id, "mail") +
+      actionBtn("call","Call", telLink(l), id, "call") +
+      actionBtn("maps","Maps", l.maps, id, "maps");
+
+    return ''+
+    '<div class="card'+(isDone?' done':'')+'" data-id="'+esc(id)+'">'+
+      '<div class="head">'+
+        '<div style="flex:1">'+
+          '<div class="name">'+esc(l.name||"—")+'</div>'+
+          '<div class="sub">'+esc(loc || l.address || "")+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="badges">'+
+        '<span class="b '+segCls+'">'+esc(l.segment)+'</span>'+
+        (l.category?'<span class="b cat">'+esc(l.category)+'</span>':'')+
+        '<span class="b rate">'+esc(stars)+'</span>'+
+        (l.website?'<span class="b">has site</span>':'')+
+      '</div>'+
+      '<div class="preview">'+esc(buildMessage(l))+'</div>'+
+      '<div class="actions">'+ (acts || '<span class="link-min">no contact channels</span>') +'</div>'+
+      '<div class="foot">'+
+        '<label class="chk"><input type="checkbox" class="doneChk" '+(isDone?'checked':'')+'> Mark contacted</label>'+
+        '<span class="spacer"></span>'+
+        '<button class="link-min copyMsg">Copy message</button>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function render(){
+    kpis();
+    var list = applyFilters();
+    $("#grid").innerHTML = list.map(card).join("");
+    $("#empty").style.display = list.length ? "none" : "block";
+    $("#countNote").textContent = list.length + " of " + leads.length + " shown";
+    var src = (window.DEFAULT_LEADS && window.DEFAULT_LEADS.generatedFrom) || "leads";
+    $("#srcNote").textContent = leads.length + " leads loaded · source: " + src + " · saved in this browser";
+  }
+
+  // ---------- events ----------
+  function onGridClick(e){
+    var a = e.target.closest("a.a");
+    if(a){
+      var id = a.getAttribute("data-id"), ch = a.getAttribute("data-ch");
+      log[id+"::"+ch] = true;
+      a.classList.add("used");
+      save();
+      return;
+    }
+    var copy = e.target.closest(".copyMsg");
+    if(copy){
+      var cardEl = e.target.closest(".card");
+      var idc = cardEl.getAttribute("data-id");
+      var l = leads.find(function(x){return leadId(x)===idc;});
+      if(l){
+        navigator.clipboard.writeText(buildMessage(l)).then(function(){
+          copy.textContent = "Copied ✓";
+          setTimeout(function(){ copy.textContent="Copy message"; },1400);
+        });
+      }
+    }
+  }
+
+  function onGridChange(e){
+    var chk = e.target.closest(".doneChk");
+    if(!chk) return;
+    var cardEl = e.target.closest(".card");
+    var id = cardEl.getAttribute("data-id");
+    if(chk.checked) done[id]=true; else delete done[id];
+    save();
+    cardEl.classList.toggle("done", chk.checked);
+    kpis();
+    if(f.hideDone && chk.checked) render();
+  }
+
+  function wireFilters(){
+    $("#segFilter").addEventListener("click", function(e){
+      var b = e.target.closest("button"); if(!b) return;
+      $all("#segFilter button").forEach(function(x){x.classList.remove("on");});
+      b.classList.add("on"); f.seg = b.getAttribute("data-seg"); render();
+    });
+    $("#catFilter").addEventListener("change", function(){ f.cat=this.value; render(); });
+    $("#stateFilter").addEventListener("change", function(){ f.state=this.value; render(); });
+    $("#sortBy").addEventListener("change", function(){ f.sort=this.value; render(); });
+    $("#hideDone").addEventListener("change", function(){ f.hideDone=this.checked; render(); });
+    var t;
+    $("#search").addEventListener("input", function(){
+      var v=this.value; clearTimeout(t); t=setTimeout(function(){ f.q=v; render(); },120);
+    });
+  }
+
+  function wirePitch(){
+    var ta = $("#pitchTpl");
+    ta.value = pitchTpl;
+    var t;
+    ta.addEventListener("input", function(){
+      var v=this.value; clearTimeout(t);
+      t=setTimeout(function(){ pitchTpl=v; save(); render(); },200);
+    });
+    $("#btnPitchReset").addEventListener("click", function(){
+      pitchTpl = DEFAULT_PITCH; ta.value = pitchTpl; save(); render();
+    });
+  }
+
+  // ---------- import ----------
+  function openModal(){ $("#modalBg").classList.add("on"); $("#importMsg").textContent=""; $("#importMsg").className="msg"; }
+  function closeModal(){ $("#modalBg").classList.remove("on"); }
+
+  function handleFile(file){
+    var msg = $("#importMsg");
+    msg.className = "msg"; msg.textContent = "Reading "+file.name+" …";
+    var reader = new FileReader();
+    reader.onload = function(ev){
+      try{
+        var data = new Uint8Array(ev.target.result);
+        var wb = XLSX.read(data, {type:"array"});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(ws, {defval:""});
+        if(!rows.length){ msg.className="msg err"; msg.textContent="That sheet looks empty."; return; }
+        var incoming = rowsToLeads(rows);
+        if(!incoming.length){ msg.className="msg err"; msg.textContent="Couldn't find a Name column."; return; }
+        var replace = $("#replaceMode").checked;
+        var before = leads.length;
+        leads = mergeLeads(leads, incoming, replace);
+        save();
+        fillSelectors(); render();
+        var added = leads.length - (replace?0:before);
+        msg.className = "msg ok";
+        msg.textContent = replace
+          ? ("Replaced list — "+leads.length+" leads loaded.")
+          : ("Done — "+incoming.length+" rows read, "+added+" new leads added ("+leads.length+" total).");
+        setTimeout(closeModal, 1400);
+      }catch(err){
+        msg.className="msg err"; msg.textContent="Import failed: "+err.message;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function wireImport(){
+    $("#btnImport").addEventListener("click", openModal);
+    $("#btnCloseModal").addEventListener("click", closeModal);
+    $("#modalBg").addEventListener("click", function(e){ if(e.target===this) closeModal(); });
+    var drop = $("#drop"), file = $("#file");
+    drop.addEventListener("click", function(){ file.click(); });
+    file.addEventListener("change", function(){ if(this.files[0]) handleFile(this.files[0]); this.value=""; });
+    ["dragenter","dragover"].forEach(function(ev){
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("hot"); });
+    });
+    ["dragleave","drop"].forEach(function(ev){
+      drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("hot"); });
+    });
+    drop.addEventListener("drop", function(e){
+      var fl = e.dataTransfer.files[0]; if(fl) handleFile(fl);
+    });
+  }
+
+  // ---------- backup / reset ----------
+  function wireTopButtons(){
+    $("#btnExport").addEventListener("click", function(){
+      var payload = { leads:leads, log:log, done:done, pitch:pitchTpl, exportedAt:new Date().toISOString() };
+      var blob = new Blob([JSON.stringify(payload,null,1)], {type:"application/json"});
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "leads-backup-"+new Date().toISOString().slice(0,10)+".json";
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 500);
+    });
+    $("#btnReset").addEventListener("click", function(){
+      if(!confirm("Reset to the original built-in leads?\nThis clears imports and contact history in this browser.")) return;
+      localStorage.removeItem(LS_LEADS);
+      localStorage.removeItem(LS_LOG);
+      localStorage.removeItem(LS_UICHK);
+      loadState(); fillSelectors(); wirePitch(); render();
+    });
+  }
+
+  // ---------- boot ----------
+  loadState();
+  fillSelectors();
+  wireFilters();
+  wirePitch();
+  wireImport();
+  wireTopButtons();
+  $("#grid").addEventListener("click", onGridClick);
+  $("#grid").addEventListener("change", onGridChange);
+  render();
+})();
+</script>
+</body>
+</html>
