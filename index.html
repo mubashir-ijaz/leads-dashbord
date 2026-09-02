@@ -70,6 +70,24 @@
   .tokens{color:var(--muted-2);font-size:12px;margin-top:6px}
   .tokens code{background:var(--chip);padding:1px 6px;border-radius:6px;color:var(--muted)}
 
+  /* ---------- Auto-click ---------- */
+  .auto{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px}
+  .auto .row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .auto h3{margin:0;font-size:13px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+  .auto-status{font-size:12px;font-weight:700;color:var(--muted-2);background:var(--chip);padding:3px 10px;border-radius:999px}
+  .auto-status.run{color:#bff3ce;background:rgba(34,197,94,.14)}
+  .auto-controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+  .auto-controls label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted);font-weight:600}
+  .auto-controls label.toggle{flex-direction:row;align-items:center;gap:7px;font-weight:600}
+  .auto-controls select,.auto-controls input[type=number]{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--text)
+  }
+  .auto-controls input[type=number]{width:78px}
+  .auto-note{color:var(--muted-2);font-size:12px;margin-top:9px}
+  .auto-bar{height:6px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line);margin-top:10px;overflow:hidden;display:none}
+  .auto-bar.on{display:block}
+  .auto-bar > i{display:block;height:100%;width:0;background:var(--brand);transition:width .3s}
+
   /* ---------- Filters ---------- */
   .filters{
     position:sticky;top:0;z-index:20;background:rgba(15,18,22,.86);backdrop-filter:blur(8px);
@@ -171,6 +189,44 @@
     <textarea id="pitchTpl" spellcheck="false"></textarea>
     <div class="tokens">
       Tokens: <code>{name}</code> <code>{category}</code> <code>{city}</code> <code>{state}</code> <code>{reason}</code> — auto-filled per lead.
+    </div>
+  </section>
+
+  <section class="auto">
+    <div class="row">
+      <h3>Auto-click outreach</h3>
+      <span class="spacer" style="flex:1"></span>
+      <span class="auto-status" id="autoStatus">idle</span>
+    </div>
+    <div class="auto-controls">
+      <label>Button
+        <select id="autoChannel">
+          <option value="wa">WhatsApp</option>
+          <option value="fb">Facebook</option>
+          <option value="ig">Instagram</option>
+          <option value="li">LinkedIn</option>
+          <option value="mail">Email</option>
+        </select>
+      </label>
+      <label>Every … sec
+        <input type="number" id="autoDelay" min="2" max="900" value="5" />
+      </label>
+      <label>From #
+        <input type="number" id="autoFrom" min="1" value="1" />
+      </label>
+      <label>To #
+        <input type="number" id="autoTo" min="1" value="10" />
+      </label>
+      <label class="toggle"><input type="checkbox" id="autoMark" checked /> mark contacted</label>
+      <button class="btn primary" id="autoStart">▶ Start</button>
+      <button class="btn" id="autoStop" disabled>■ Stop</button>
+    </div>
+    <div class="auto-bar" id="autoBar"><i></i></div>
+    <div class="auto-note" id="autoNote">
+      Clicks the chosen button on the leads currently shown (respects the filters &amp; sort below),
+      from row <b>From&nbsp;#</b> to <b>To&nbsp;#</b>, one every few seconds — e.g. From&nbsp;10
+      To&nbsp;20. Each opens in one reused tab; <b>allow pop-ups for this site</b> the first time and
+      keep that tab open beside this one. <b>Stop</b> halts it at once.
     </div>
   </section>
 
@@ -483,6 +539,14 @@
     var num = (l.phone.match(/[\d+]+/g)||[]).join("");
     return num ? "tel:"+num : "";
   }
+  function channelLink(l, ch){
+    if(ch==="wa")   return waLink(l);
+    if(ch==="fb")   return fbLink(l);
+    if(ch==="ig")   return igLink(l);
+    if(ch==="li")   return liLink(l);
+    if(ch==="mail") return mailLink(l);
+    return "";
+  }
 
   function actionBtn(cls,label,href,id,ch){
     if(!href) return "";
@@ -606,6 +670,71 @@
     });
   }
 
+  // ---------- auto-click ----------
+  var autoTimer = null, autoRunning = false;
+
+  function autoSetRunning(on){
+    autoRunning = on;
+    ["autoStart"].forEach(function(id){ $("#"+id).disabled = on; });
+    ["autoStop"].forEach(function(id){ $("#"+id).disabled = !on; });
+    ["autoChannel","autoDelay","autoFrom","autoTo","autoMark"].forEach(function(id){
+      $("#"+id).disabled = on;
+    });
+    $("#autoStatus").classList.toggle("run", on);
+    $("#autoBar").classList.toggle("on", on);
+    if(!on) $("#autoBar").querySelector("i").style.width = "0";
+  }
+
+  function autoStop(msg){
+    if(autoTimer){ clearTimeout(autoTimer); autoTimer = null; }
+    autoSetRunning(false);
+    if(msg) $("#autoStatus").textContent = msg;
+    render();
+  }
+
+  function wireAuto(){
+    $("#autoStop").addEventListener("click", function(){ autoStop("stopped"); });
+
+    $("#autoStart").addEventListener("click", function(){
+      if(autoRunning) return;
+      var ch    = $("#autoChannel").value;
+      var delay = Math.max(2, parseInt($("#autoDelay").value, 10) || 5);
+      var list  = applyFilters();               // exactly what's shown, same order
+      var total = list.length;
+      var from  = Math.max(1, parseInt($("#autoFrom").value, 10) || 1);
+      var to    = Math.min(total, parseInt($("#autoTo").value, 10) || total);
+      if(!total || from > to){ $("#autoStatus").textContent = "nothing in that range"; return; }
+
+      var queue = list.slice(from - 1, to);
+      var mark  = $("#autoMark").checked;
+
+      // open the single reused tab now, while we still have the click gesture
+      try{ window.open("about:blank", "lead_outreach"); }catch(e){}
+
+      autoSetRunning(true);
+      var i = 0;
+      (function step(){
+        if(!autoRunning) return;
+        if(i >= queue.length){ autoStop("done — opened " + queue.length); return; }
+        var l = queue[i];
+        var rowNo = from + i;
+        var href = channelLink(l, ch);
+        i++;
+        if(href){
+          try{ window.open(href, "lead_outreach"); }catch(e){}
+          var id = leadId(l);
+          log[id + "::" + ch] = true;
+          if(mark) done[id] = true;
+          save();
+        }
+        $("#autoBar").querySelector("i").style.width = Math.round(i / queue.length * 100) + "%";
+        $("#autoStatus").textContent =
+          rowNo + " / " + to + " · " + (l.name || "—") + (href ? "" : "  (no " + ch + ")");
+        autoTimer = setTimeout(step, delay * 1000);
+      })();
+    });
+  }
+
   // ---------- import ----------
   function openModal(){ $("#modalBg").classList.add("on"); $("#importMsg").textContent=""; $("#importMsg").className="msg"; }
   function closeModal(){ $("#modalBg").classList.remove("on"); }
@@ -684,6 +813,7 @@
   fillSelectors();
   wireFilters();
   wirePitch();
+  wireAuto();
   wireImport();
   wireTopButtons();
   $("#grid").addEventListener("click", onGridClick);

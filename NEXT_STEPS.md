@@ -8,6 +8,10 @@ _Last updated: 2026-09-02_
   history). Self-contained HTML + CSS + JS. Features:
   - Two segments as filter chips: **No website** (149) / **Low rating** (263).
   - Filters: business **Category**, **US State**, search, sort, "hide contacted".
+  - **Auto-click outreach panel**: pick a button (WhatsApp/FB/IG/LinkedIn/Email),
+    set the delay in seconds, set a From#–To# row range, Start — it opens each
+    lead's link in one reused tab on a timer, marks it contacted, Stop halts it.
+    Pure browser JS (no Python); user must allow pop-ups for the site once.
   - **Editable pitch template** with `{name} {category} {city} {state} {reason}`
     tokens; `{reason}` auto-set from the segment. Per-lead filled message shown.
   - **One-click outreach**: WhatsApp (message pre-typed), Facebook, LinkedIn,
