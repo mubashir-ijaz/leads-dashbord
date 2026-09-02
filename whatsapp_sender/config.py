@@ -47,6 +47,15 @@ SEGMENTS_TO_SEND = ["No website", "Low rating"]   # remove one to skip it
 MIN_REVIEWS = 0        # skip leads with fewer than this many reviews
 SKIP_RATING_ABOVE = None   # e.g. 4.5 to only message weaker listings; None = no cap
 
+# Only use the "WhatsApp" column, never fall back to the plain "Phone" number.
+# The scraper puts a wa.me link in that column for numbers it thinks have
+# WhatsApp - but that is a guess. Run  check_whatsapp.py  to verify for real.
+WHATSAPP_COLUMN_ONLY = True
+
+# When whatsapp_numbers.csv exists (written by check_whatsapp.py), send_whatsapp.py
+# messages ONLY the numbers confirmed to be on WhatsApp. Set False to ignore it.
+USE_CHECKED_LIST = True
+
 # ---------------------------------------------------------------------------
 # Sending behaviour  (keep it slow - WhatsApp bans bulk senders)
 # ---------------------------------------------------------------------------
@@ -59,10 +68,17 @@ MAX_DELAY_SECONDS = 55
 BATCH_LIMIT = 25             # max messages per run; override with --limit / --all
 SEND_TIMEOUT = 45            # seconds to wait for the chat + send button to load
 
+# check_whatsapp.py behaviour (verifying, not sending -> can be a bit quicker)
+CHECK_MIN_DELAY_SECONDS = 8
+CHECK_MAX_DELAY_SECONDS = 18
+CHECK_TIMEOUT = 30           # seconds to decide "on WhatsApp" vs "not"
+
 # ---------------------------------------------------------------------------
 # Files (all created next to this script)
 # ---------------------------------------------------------------------------
-SENT_LOG    = HERE / "sent_log.csv"       # numbers already messaged (resume list)
-FAILED_LOG  = HERE / "failed_log.csv"     # numbers that errored / were invalid
-PREVIEW_CSV = HERE / "preview.csv"        # written by --dry-run so you can review
-CHROME_PROFILE_DIR = HERE / "chrome_profile"   # keeps you logged in to WhatsApp Web
+SENT_LOG      = HERE / "sent_log.csv"        # numbers already messaged (resume list)
+FAILED_LOG    = HERE / "failed_log.csv"      # numbers that errored / were invalid
+PREVIEW_CSV   = HERE / "preview.csv"         # written by --dry-run so you can review
+CHECKED_CSV   = HERE / "whatsapp_numbers.csv"    # numbers CONFIRMED on WhatsApp
+NOT_ON_WA_CSV = HERE / "not_on_whatsapp.csv"     # numbers confirmed NOT on WhatsApp
+CHROME_PROFILE_DIR = HERE / "chrome_profile"     # keeps you logged in to WhatsApp Web
