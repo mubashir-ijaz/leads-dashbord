@@ -79,6 +79,13 @@ CHECK_TIMEOUT = 30           # seconds to decide "on WhatsApp" vs "not"
 # ---------------------------------------------------------------------------
 PER_NUMBER_WAIT = 5          # seconds to wait on each chat before reading result
 DEBUG_PORT = 9222           # Chrome remote-debugging port to launch / attach to
+
+# click_dashboard_whatsapp.py - opens your live dashboard and clicks each
+# WhatsApp button one by one.
+DASHBOARD_URL  = "https://leads-dashbord.vercel.app/"
+DASHBOARD_USER = "sam"       # HTTP Basic Auth login for the dashboard
+DASHBOARD_PASS = "samsam"
+CLICK_WAIT = 5              # seconds to wait after each button click
 # Leave these None to auto-detect the standard Windows locations.
 CHROME_BINARY = None        # e.g. r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 CHROME_USER_DATA = None     # e.g. os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
