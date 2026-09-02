@@ -224,9 +224,9 @@
     <div class="auto-bar" id="autoBar"><i></i></div>
     <div class="auto-note" id="autoNote">
       Clicks the chosen button on the leads currently shown (respects the filters &amp; sort below),
-      from row <b>From&nbsp;#</b> to <b>To&nbsp;#</b>, one every few seconds — e.g. From&nbsp;10
-      To&nbsp;20. Each opens in one reused tab; <b>allow pop-ups for this site</b> the first time and
-      keep that tab open beside this one. <b>Stop</b> halts it at once.
+      from row <b>From&nbsp;#</b> to <b>To&nbsp;#</b>, one every few seconds — e.g. From&nbsp;30
+      To&nbsp;50. Opens each in one reused tab (leave it open beside this one). The first Start may
+      need you to <b>allow pop-ups for this site</b> — then click Start again. <b>Stop</b> halts at once.
     </div>
   </section>
 
@@ -671,12 +671,12 @@
   }
 
   // ---------- auto-click ----------
-  var autoTimer = null, autoRunning = false;
+  var autoTimer = null, autoRunning = false, autoWin = null;
 
   function autoSetRunning(on){
     autoRunning = on;
-    ["autoStart"].forEach(function(id){ $("#"+id).disabled = on; });
-    ["autoStop"].forEach(function(id){ $("#"+id).disabled = !on; });
+    $("#autoStart").disabled = on;
+    $("#autoStop").disabled = !on;
     ["autoChannel","autoDelay","autoFrom","autoTo","autoMark"].forEach(function(id){
       $("#"+id).disabled = on;
     });
@@ -690,6 +690,20 @@
     autoSetRunning(false);
     if(msg) $("#autoStatus").textContent = msg;
     render();
+  }
+
+  // Navigate the one reused tab. Setting .location.href on a window we opened is
+  // NOT blocked by the pop-up blocker (unlike repeated window.open from a timer).
+  function autoOpen(href){
+    if(!autoWin || autoWin.closed){
+      autoWin = window.open(href, "lead_outreach");   // (re)create if user closed it
+      return !!autoWin;
+    }
+    try{ autoWin.location.href = href; return true; }
+    catch(e){
+      autoWin = window.open(href, "lead_outreach");
+      return !!autoWin;
+    }
   }
 
   function wireAuto(){
@@ -708,29 +722,43 @@
       var queue = list.slice(from - 1, to);
       var mark  = $("#autoMark").checked;
 
-      // open the single reused tab now, while we still have the click gesture
-      try{ window.open("about:blank", "lead_outreach"); }catch(e){}
+      // grab the reused tab now, while we still have the click gesture
+      autoWin = window.open("about:blank", "lead_outreach");
+      if(!autoWin){
+        $("#autoStatus").textContent = "pop-up blocked — allow pop-ups for this site, then Start again";
+        return;
+      }
 
       autoSetRunning(true);
-      var i = 0;
+      var i = 0, opened = 0, skipped = 0;
       (function step(){
         if(!autoRunning) return;
-        if(i >= queue.length){ autoStop("done — opened " + queue.length); return; }
+        if(i >= queue.length){
+          autoStop("done — opened " + opened + (skipped ? (" · " + skipped + " had no " + ch) : ""));
+          return;
+        }
         var l = queue[i];
         var rowNo = from + i;
         var href = channelLink(l, ch);
         i++;
+        var wait = delay * 1000;
         if(href){
-          try{ window.open(href, "lead_outreach"); }catch(e){}
+          var ok = autoOpen(href);
           var id = leadId(l);
           log[id + "::" + ch] = true;
           if(mark) done[id] = true;
           save();
+          opened++;
+          if(!ok){ autoStop("tab closed — reopen it and Start again from row " + rowNo); return; }
+        } else {
+          skipped++;
+          wait = 250;                       // fly past leads with no such link
         }
         $("#autoBar").querySelector("i").style.width = Math.round(i / queue.length * 100) + "%";
         $("#autoStatus").textContent =
-          rowNo + " / " + to + " · " + (l.name || "—") + (href ? "" : "  (no " + ch + ")");
-        autoTimer = setTimeout(step, delay * 1000);
+          rowNo + " / " + to + " · " + (l.name || "—") +
+          (href ? ("  (opened " + opened + ")") : ("  (no " + ch + ", skipped)"));
+        autoTimer = setTimeout(step, wait);
       })();
     });
   }
