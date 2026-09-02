@@ -10,8 +10,12 @@ there are two scripts:
 
 | Script | What it does | Sends messages? |
 |---|---|---|
-| `check_whatsapp.py` | Opens each number on WhatsApp Web, records which ones exist → `whatsapp_numbers.csv` | **No** |
+| `check_via_my_chrome.py` | Same check, but drives **your normal Chrome** — no QR scan | **No** |
+| `check_whatsapp.py` | Opens each number on WhatsApp Web in a dedicated profile, records which exist → `whatsapp_numbers.csv` | **No** |
 | `send_whatsapp.py` | Messages only the numbers in `whatsapp_numbers.csv` | Yes |
+
+Both checkers write the same `whatsapp_numbers.csv` / `not_on_whatsapp.csv`, so
+`send_whatsapp.py` works with whichever you used.
 
 > [!WARNING]
 > Bulk-messaging strangers breaks WhatsApp's terms and **can get your number
@@ -29,14 +33,38 @@ Needs Google Chrome. Selenium 4 fetches the matching driver itself.
 
 ## Step 1 — find who's on WhatsApp
 
+### Option A — use YOUR normal Chrome (no QR scan)   ← recommended
+
+`check_via_my_chrome.py` drives your everyday Chrome, so it reuses the WhatsApp
+Web login you already have.
+
+```bash
+# close ALL Chrome windows first, then:
+python check_via_my_chrome.py                 # script starts Chrome for you
+python check_via_my_chrome.py --limit 20      # try 20 first
+python check_via_my_chrome.py --wait 7        # wait 7s per number instead of 5
+```
+
+Or start Chrome yourself and attach (Chrome can stay open this way):
+
+```bash
+start_chrome_debug.bat            # double-click it
+python check_via_my_chrome.py --attach
+```
+
+It opens `web.whatsapp.com/send?phone=<number>` in a background tab, waits 5s,
+reads the result, closes the tab, next.
+
+### Option B — dedicated profile + QR scan
+
 ```bash
 python check_whatsapp.py                 # check all leads
 python check_whatsapp.py --limit 50      # or just 50 at a time
 ```
 
-A Chrome window opens on WhatsApp Web. **First run only:** scan the QR code with
-your phone (WhatsApp → Linked devices → Link a device). Login is saved in
-`./chrome_profile`, so later runs skip the QR. Type `go` when prompted.
+A separate Chrome window opens on WhatsApp Web. **First run only:** scan the QR
+code with your phone (WhatsApp → Linked devices → Link a device). Login is saved
+in `./chrome_profile`, so later runs skip the QR. Type `go` when prompted.
 
 Each line shows a running tally, e.g.:
 

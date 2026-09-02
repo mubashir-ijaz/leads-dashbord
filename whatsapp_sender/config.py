@@ -74,6 +74,17 @@ CHECK_MAX_DELAY_SECONDS = 18
 CHECK_TIMEOUT = 30           # seconds to decide "on WhatsApp" vs "not"
 
 # ---------------------------------------------------------------------------
+# check_via_my_chrome.py  - drives YOUR normal Chrome / your existing WhatsApp
+# Web login through Chrome's DevTools port. No QR scan, no separate profile.
+# ---------------------------------------------------------------------------
+PER_NUMBER_WAIT = 5          # seconds to wait on each chat before reading result
+DEBUG_PORT = 9222           # Chrome remote-debugging port to launch / attach to
+# Leave these None to auto-detect the standard Windows locations.
+CHROME_BINARY = None        # e.g. r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+CHROME_USER_DATA = None     # e.g. os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
+CHROME_PROFILE = "Default"  # which profile folder inside User Data to use
+
+# ---------------------------------------------------------------------------
 # Files (all created next to this script)
 # ---------------------------------------------------------------------------
 SENT_LOG      = HERE / "sent_log.csv"        # numbers already messaged (resume list)
