@@ -179,6 +179,8 @@
   .channel-btn svg{ width:12px; height:12px; flex:none; }
   .channel-btn.primary{ background:var(--accent); border-color:var(--accent); color:var(--on-accent); }
   .channel-btn.primary:hover{ filter:brightness(1.06); color:var(--on-accent); }
+  .channel-btn.clicked{ background:var(--good-soft); border-color:var(--good); color:var(--good); }
+  .channel-btn.clicked:hover{ color:var(--good); }
 
   .msg-cell{ min-width:230px; max-width:320px; }
   .msg-preview{ color:var(--ink-soft); font-size:12.5px; line-height:1.4; margin:0 0 6px; }
@@ -307,6 +309,22 @@
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(contacted))); }catch(e){}
   }
 
+  var CLICK_KEY = 'asc_outreach_clicked_v1';
+  var clickedMap = {};
+  try{ clickedMap = JSON.parse(localStorage.getItem(CLICK_KEY) || '{}'); }catch(e){}
+
+  function saveClicked(){
+    try{ localStorage.setItem(CLICK_KEY, JSON.stringify(clickedMap)); }catch(e){}
+  }
+
+  function markChannelClicked(id, channel){
+    if(!clickedMap[id]) clickedMap[id] = {};
+    if(clickedMap[id][channel]) return false;
+    clickedMap[id][channel] = true;
+    saveClicked();
+    return true;
+  }
+
   var state = { segment:'all', channel:'all', search:'', sort:'default', hideContacted:false };
 
   var ICONS = {
@@ -380,19 +398,29 @@
     }catch(e){ return null; }
   }
 
-  function channelBtn(href, icon, label, primary, title){
-    return '<a class="channel-btn'+(primary?' primary':'')+'" href="'+escapeHtml(href)+'" target="_blank" rel="noopener" title="'+escapeHtml(title)+'">'+icon+'<span>'+label+'</span></a>';
+  function isChannelClicked(id, channel){
+    return !!(clickedMap[id] && clickedMap[id][channel]);
+  }
+
+  function channelBtn(href, icon, label, primary, title, leadId, channel){
+    var done = channel && isChannelClicked(leadId, channel);
+    var cls = 'channel-btn' + (primary && !done ? ' primary' : '') + (done ? ' clicked' : '');
+    var shownIcon = done ? ICONS.check : icon;
+    var shownLabel = done ? 'Opened' : label;
+    var shownTitle = done ? 'Already opened — click to open again' : title;
+    var dataAttrs = channel ? ' data-lead-id="'+leadId+'" data-channel="'+channel+'"' : '';
+    return '<a class="'+cls+'" href="'+escapeHtml(href)+'" target="_blank" rel="noopener" title="'+escapeHtml(shownTitle)+'"'+dataAttrs+'>'+shownIcon+'<span>'+shownLabel+'</span></a>';
   }
 
   function channelLinks(l){
     var out = '';
-    if(l.whatsapp) out += channelBtn(l.whatsapp, ICONS.whatsapp, 'WhatsApp', true, 'Opens a WhatsApp chat, ready to send');
+    if(l.whatsapp) out += channelBtn(l.whatsapp, ICONS.whatsapp, 'WhatsApp', true, 'Opens a WhatsApp chat, ready to send', l.id, 'whatsapp');
     var mLink = messengerLink(l.facebook);
-    if(mLink) out += channelBtn(mLink, ICONS.facebook, 'Message', true, 'Opens Messenger, ready to send');
-    else if(l.facebook) out += channelBtn(l.facebook, ICONS.facebook, 'FB Page', false, 'Opens their Facebook page — tap Message from there');
-    if(l.instagram) out += channelBtn(l.instagram, ICONS.instagram, 'Instagram', false, 'Opens their Instagram profile — tap Message from there');
-    if(l.email) out += channelBtn('mailto:'+l.email, ICONS.mail, 'Email', true, 'Opens a pre-addressed email');
-    if(l.maps) out += channelBtn(l.maps, ICONS.maps, 'Maps', false, 'Opens their Maps listing');
+    if(mLink) out += channelBtn(mLink, ICONS.facebook, 'Message', true, 'Opens Messenger, ready to send', l.id, 'facebook');
+    else if(l.facebook) out += channelBtn(l.facebook, ICONS.facebook, 'FB Page', false, 'Opens their Facebook page — tap Message from there', l.id, 'facebook');
+    if(l.instagram) out += channelBtn(l.instagram, ICONS.instagram, 'Instagram', false, 'Opens their Instagram profile — tap Message from there', l.id, 'instagram');
+    if(l.email) out += channelBtn('mailto:'+l.email, ICONS.mail, 'Email', true, 'Opens a pre-addressed email', l.id, 'email');
+    if(l.maps) out += channelBtn(l.maps, ICONS.maps, 'Maps', false, 'Opens their Maps listing', l.id, 'maps');
     return out || '<span style="color:var(--ink-faint);font-size:12px;">—</span>';
   }
 
@@ -458,6 +486,21 @@
   }
 
   document.getElementById('rows').addEventListener('click', function(e){
+    var chBtn = e.target.closest('a.channel-btn[data-channel]');
+    if(chBtn){
+      var chId = parseInt(chBtn.getAttribute('data-lead-id'), 10);
+      var channel = chBtn.getAttribute('data-channel');
+      if(markChannelClicked(chId, channel)){
+        chBtn.classList.remove('primary');
+        chBtn.classList.add('clicked');
+        chBtn.title = 'Already opened — click to open again';
+        var lbl = chBtn.querySelector('span');
+        if(lbl) lbl.textContent = 'Opened';
+        var svgEl = chBtn.querySelector('svg');
+        if(svgEl) svgEl.outerHTML = ICONS.check;
+      }
+      return;
+    }
     var btn = e.target.closest('button');
     if(!btn) return;
     var tr = e.target.closest('tr');
