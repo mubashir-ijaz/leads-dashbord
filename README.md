@@ -15,21 +15,38 @@ one click, and track who you've already contacted — all saved in your browser.
 
 ## Features
 
-- **Two segments** — `No website` and `Low rating` — as one-click filter chips,
-  plus filters for business **category** and **US state**, free-text search, sort,
-  and a "hide contacted" toggle.
-- **Editable pitch template** with tokens `{name}`, `{category}`, `{city}`,
-  `{state}`, `{reason}`. Each lead gets its own filled-in message; `{reason}` is
-  chosen from the segment automatically.
+- **CRM-style category sidebar** — a left panel lists every category with its
+  live lead count. Click one to work only that category. The 412 starter leads
+  are pre-sorted into **Hotels / Restaurants / Coffee Shops**; imports add
+  whatever category you name. "All leads" shows everything.
+- **Done → Follow-up** — the ✓ next to a category (or the button in the main
+  header) marks it done and moves it to a **Follow-up** section at the bottom of
+  the sidebar; ↩ moves it back to active.
+- **Import = name the category first** — the *Import Excel / CSV* button opens a
+  two-step modal: (1) type the category name for the file (quick-pick chips for
+  existing categories), (2) choose the `.xlsx` / `.csv`. **Every row** in the
+  sheet is filed under that category. Parsed fully in the browser with bundled
+  [SheetJS](https://sheetjs.com) (no CDN); merges by default, or replaces just
+  that category's leads.
+- **Pagination** — 25 leads per page with a numbered pager.
+- **Two segments** (`No website` / `Low rating`) as filter chips, plus **US
+  state**, free-text search, sort, an "Under 200 reviews" toggle and a "hide
+  contacted" toggle. KPI tiles reflect the current view.
+- **Editable pitch template** with tokens `{name}`, `{category}`, `{group}`,
+  `{city}`, `{state}`, `{reason}`, `{review_offer}`. `{category}` is the specific
+  business type, `{group}` is the sidebar category; `{reason}` comes from the
+  segment; `{review_offer}` (an offer to grow their Google reviews) only appears
+  for leads under 200 reviews.
+- **Copy message** — a prominent button on every card copies that lead's
+  personalised message (with a `file://` clipboard fallback).
 - **One-click outreach** — WhatsApp (`wa.me` with the message pre-typed),
   Facebook page, LinkedIn, Instagram, `mailto:` with subject + body, `tel:`, and
   Google Maps. Only the channels a lead actually has are shown. Each button
   remembers it was opened.
-- **Import your own leads** — the *Import Excel / CSV* button parses an `.xlsx` /
-  `.csv` fully in the browser (bundled [SheetJS](https://sheetjs.com), no CDN),
-  auto-detects the columns, and merges (or replaces) the working list.
-- **Backup / Reset** — export a JSON snapshot, or reset to the original built-in
-  leads.
+- **Auto-click outreach** — walk the whole filtered list opening one channel link
+  every N seconds (collapsible panel).
+- **Backup / Reset** — export a JSON snapshot (leads + categories + history), or
+  reset to the original built-in leads.
 
 ## Files
 
