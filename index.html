@@ -639,6 +639,14 @@
       pitchByCat[PITCH_DEFAULT_KEY] = (typeof legacy === "string" && legacy) ? legacy : DEFAULT_PITCH;
     }
     if(!pitchByCat[PITCH_DEFAULT_KEY]) pitchByCat[PITCH_DEFAULT_KEY] = DEFAULT_PITCH;
+    // a category pushed with its own suggested pitch seeds it here once, but
+    // never overwrites a pitch already customised in this browser
+    if(window.DEFAULT_LEADS && window.DEFAULT_LEADS.categoryMeta){
+      Object.keys(window.DEFAULT_LEADS.categoryMeta).forEach(function(c){
+        var meta = window.DEFAULT_LEADS.categoryMeta[c];
+        if(meta && meta.pitch && !pitchByCat[c]) pitchByCat[c] = meta.pitch;
+      });
+    }
     set(LS_LEADS, leads);
   }
   function pitchKeyFor(cat){ return cat || PITCH_DEFAULT_KEY; }
