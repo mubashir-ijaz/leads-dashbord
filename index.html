@@ -346,6 +346,7 @@
       <input type="search" id="search" placeholder="Search name, city, address…" />
       <label class="toggle"><input type="checkbox" id="lowRevOnly" /> Under 200 reviews</label>
       <label class="toggle"><input type="checkbox" id="hideDone" /> Hide contacted</label>
+      <button class="btn sm ghost" id="btnMarkPage" title="Mark every lead on this page as contacted">✓ Mark page contacted</button>
       <span class="count-note" id="countNote"></span>
     </section>
 
@@ -841,6 +842,8 @@
     el.innerHTML = parts.join("");
   }
 
+  var currentPageIds = [];
+
   function render(){
     renderSide();
     renderCatHeader();
@@ -853,6 +856,7 @@
     if(f.page < 1) f.page = 1;
     var start = (f.page-1)*PAGE_SIZE;
     var pageItems = filtered.slice(start, start+PAGE_SIZE);
+    currentPageIds = pageItems.map(leadId);
 
     $("#grid").innerHTML = pageItems.map(card).join("");
     $("#empty").style.display = totalItems ? "none" : "block";
@@ -862,6 +866,11 @@
     var to   = Math.min(start+PAGE_SIZE, totalItems);
     $("#countNote").textContent = "Showing "+from+"–"+to+" of "+totalItems;
     $("#srcNote").textContent = leads.length + " leads · saved in this browser";
+
+    var allDone = pageItems.length && pageItems.every(function(l){ return done[leadId(l)]; });
+    var btnMark = $("#btnMarkPage");
+    btnMark.disabled = !pageItems.length;
+    btnMark.textContent = allDone ? "↺ Unmark page" : "✓ Mark page contacted";
   }
   function repage(){ f.page = 1; render(); }
 
@@ -956,6 +965,12 @@
     var t;
     $("#search").addEventListener("input", function(){
       var v=this.value; clearTimeout(t); t=setTimeout(function(){ f.q=v; repage(); },120);
+    });
+    $("#btnMarkPage").addEventListener("click", function(){
+      if(!currentPageIds.length) return;
+      var allDone = currentPageIds.every(function(id){ return done[id]; });
+      currentPageIds.forEach(function(id){ if(allDone) delete done[id]; else done[id]=true; });
+      save(); render();
     });
   }
 
