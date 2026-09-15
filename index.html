@@ -1026,8 +1026,12 @@
       t=setTimeout(function(){ setPitchFor(f.category, v); save(); render(); },200);
     });
     $("#btnPitchReset").addEventListener("click", function(){
-      if(f.category) delete pitchByCat[pitchKeyFor(f.category)];
-      else pitchByCat[PITCH_DEFAULT_KEY] = DEFAULT_PITCH;
+      if(f.category){
+        var meta = window.DEFAULT_LEADS && window.DEFAULT_LEADS.categoryMeta
+          && window.DEFAULT_LEADS.categoryMeta[f.category];
+        if(meta && meta.pitch) pitchByCat[f.category] = meta.pitch;
+        else delete pitchByCat[pitchKeyFor(f.category)];
+      } else pitchByCat[PITCH_DEFAULT_KEY] = DEFAULT_PITCH;
       syncPitchBox(); save(); render();
     });
   }
