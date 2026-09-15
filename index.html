@@ -14,6 +14,7 @@
     --text:#eef1f5; --muted:#9aa3b2; --muted-2:#6b7382;
     --brand:#c9a24a; --brand-2:#5f8fc7; --brand-ink:#241c08;
     --wa:#25d366; --fb:#1877f2; --ig:#e1306c; --li:#0a66c2; --mail:#e0a13c; --call:#22c55e; --maps:#8b5cf6;
+    --web:#38bdf8; --tw:#1d9bf0; --yt:#ff4d4d; --tt:#ff2d6f;
     --good:#3fae6a; --warn:#d08a3e; --bad:#d1554b;
     --chip:#1f242c; --radius:14px;
     --shadow:0 10px 32px rgba(0,0,0,.38);
@@ -194,6 +195,8 @@
   .a.wa .dot{background:var(--wa)} .a.fb .dot{background:var(--fb)} .a.ig .dot{background:var(--ig)}
   .a.li .dot{background:var(--li)} .a.mail .dot{background:var(--mail)} .a.call .dot{background:var(--call)}
   .a.maps .dot{background:var(--maps)} .a.copy .dot{background:var(--brand)}
+  .a.web .dot{background:var(--web)} .a.tw .dot{background:var(--tw)}
+  .a.yt .dot{background:var(--yt)} .a.tt .dot{background:var(--tt)}
   .a.used{outline:2px solid rgba(63,174,106,.5);color:#bff3ce}
   .a.copy.ok{outline:2px solid rgba(63,174,106,.5);color:#bff3ce}
   .card .foot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
@@ -498,6 +501,9 @@
     facebook:["facebook","fb","facebook url","facebook link","facebook page"],
     instagram:["instagram","ig","instagram url","insta"],
     linkedin:["linkedin","linked in","linkedin url","linkedin page"],
+    twitter:["twitter","x","twitter url","x url","twitter/x"],
+    youtube:["youtube","yt","youtube url","youtube channel"],
+    tiktok:["tiktok","tik tok","tiktok url"],
     address:["address","full address","street address","location"],
     city:["city","town"],
     state:["state","region","province"],
@@ -555,6 +561,9 @@
         facebook:String(g("facebook")||"").trim(),
         instagram:String(g("instagram")||"").trim(),
         linkedin:String(g("linkedin")||"").trim(),
+        twitter:String(g("twitter")||"").trim(),
+        youtube:String(g("youtube")||"").trim(),
+        tiktok:String(g("tiktok")||"").trim(),
         address:String(g("address")||"").trim(),
         city:String(g("city")||"").trim(),
         state:String(g("state")||"").trim().toUpperCase().slice(0,3),
@@ -757,6 +766,18 @@
     return "https://instagram.com/"+l.instagram.replace(/^@/,"");
   }
   function liLink(l){ return l.linkedin ? (/^https?:/.test(l.linkedin)?l.linkedin:"https://"+l.linkedin) : ""; }
+  function twLink(l){
+    if(!l.twitter) return "";
+    if(/^https?:/.test(l.twitter)) return l.twitter;
+    return "https://twitter.com/"+l.twitter.replace(/^@/,"");
+  }
+  function ytLink(l){ return l.youtube ? (/^https?:/.test(l.youtube)?l.youtube:"https://"+l.youtube) : ""; }
+  function ttLink(l){
+    if(!l.tiktok) return "";
+    if(/^https?:/.test(l.tiktok)) return l.tiktok;
+    return "https://tiktok.com/@"+l.tiktok.replace(/^@/,"");
+  }
+  function webLink(l){ return l.website ? (/^https?:/.test(l.website)?l.website:"https://"+l.website) : ""; }
   function mailLink(l){
     if(!l.email) return "";
     return "mailto:"+l.email+"?subject="+encodeURIComponent("Quick idea for "+(l.name||"your business"))+"&body="+encodeURIComponent(buildMessage(l));
@@ -767,6 +788,10 @@
     if(ch==="fb")   return fbLink(l);
     if(ch==="ig")   return igLink(l);
     if(ch==="li")   return liLink(l);
+    if(ch==="tw")   return twLink(l);
+    if(ch==="yt")   return ytLink(l);
+    if(ch==="tt")   return ttLink(l);
+    if(ch==="web")  return webLink(l);
     if(ch==="mail") return mailLink(l);
     return "";
   }
@@ -787,10 +812,14 @@
 
     var acts =
       '<button type="button" class="a copy copyMsg"><span class="dot"></span>Copy message</button>' +
+      actionBtn("web","Website", webLink(l), id, "web") +
       actionBtn("wa","WhatsApp", waLink(l), id, "wa") +
       actionBtn("fb","Facebook", fbLink(l), id, "fb") +
       actionBtn("ig","Instagram", igLink(l), id, "ig") +
+      actionBtn("tw","Twitter/X", twLink(l), id, "tw") +
       actionBtn("li","LinkedIn", liLink(l), id, "li") +
+      actionBtn("yt","YouTube", ytLink(l), id, "yt") +
+      actionBtn("tt","TikTok", ttLink(l), id, "tt") +
       actionBtn("mail","Email", mailLink(l), id, "mail") +
       actionBtn("call","Call", telLink(l), id, "call") +
       actionBtn("maps","Maps", l.maps, id, "maps");
