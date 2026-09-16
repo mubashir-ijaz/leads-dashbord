@@ -75,6 +75,13 @@
   }
   .side-h{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted-2);margin:16px 8px 7px;font-family:var(--font-head)}
   .side-h.first{margin-top:4px}
+  .side-search{margin:2px 2px 12px;position:relative}
+  .side-search input{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;
+    padding:8px 10px 8px 30px;color:var(--text);font-size:12.5px
+  }
+  .side-search input:focus{outline:none;border-color:var(--brand)}
+  .side-search .ic{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted-2);font-size:12px;pointer-events:none}
   .cat-row{display:flex;align-items:center;gap:3px;border-radius:10px;margin-bottom:2px}
   .cat-row.on{background:var(--panel-2);box-shadow:inset 2px 0 0 var(--brand)}
   .cat-open{
@@ -83,6 +90,7 @@
   }
   .cat-open:hover{background:var(--panel-2)}
   .cat-row.on .cat-open{color:#f4e6bf}
+  .cat-icon{flex:none;font-size:13.5px;line-height:1;width:16px;text-align:center;opacity:.9}
   .cat-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
   .cat-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cat-meta{display:block;font-size:10.5px;color:var(--muted-2);font-weight:500}
@@ -94,6 +102,21 @@
   }
   .cat-act:hover{background:var(--panel-2);color:var(--good);border-color:var(--line)}
   .side-empty{color:var(--muted-2);font-size:12px;padding:4px 10px}
+
+  /* ---------- Sidebar groups ---------- */
+  .cat-group{margin-bottom:3px}
+  .cat-group-h{
+    width:100%;display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:10px;
+    color:var(--text);font-weight:700;font-size:12.5px;text-align:left;background:var(--panel-2);
+    border:1px solid transparent
+  }
+  .cat-group-h:hover{border-color:var(--line)}
+  .cat-group-h .grp-arrow{flex:none;color:var(--muted-2);font-size:10px;transition:transform .15s;width:10px}
+  .cat-group.open .cat-group-h .grp-arrow{transform:rotate(90deg)}
+  .cat-group-h .cat-name{flex:1}
+  .cat-group-body{display:none;padding-left:8px;margin:3px 0 4px 20px;border-left:1px solid var(--line)}
+  .cat-group.open .cat-group-body{display:block}
+  .cat-group-body .cat-open{font-size:12.5px}
 
   /* ---------- Main column ---------- */
   .cat-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
@@ -274,7 +297,10 @@
 <div class="shell">
 
   <!-- Sidebar -->
-  <aside class="side" id="side"></aside>
+  <aside class="side" id="side">
+    <div class="side-search"><span class="ic">⌕</span><input type="search" id="sideSearch" placeholder="Filter categories…" /></div>
+    <div id="sideList"></div>
+  </aside>
 
   <!-- Main -->
   <main>
@@ -405,6 +431,7 @@
   var LS_PITCH_OLD = "lod_pitch_v3";
   var LS_UICHK = "lod_done_v1";
   var LS_CATS  = "lod_cats_v1";
+  var LS_GROUPS = "lod_groups_open_v1";
 
   var REVIEW_MIN = 200;                 // under this -> the "grow your reviews" line
   var PAGE_SIZE  = 25;
@@ -420,8 +447,18 @@
   var log   = {};   // "<id>::<channel>" -> true
   var done  = {};   // "<id>" -> true
   var pitchByCat = {};   // "<category>"|"__default__" -> template string
+  var groupOpen = {};    // "<group name>" -> true|false (collapse state, per browser)
+  var sideQ = "";        // sidebar category filter text
 
   var f = { seg:"all", category:"", state:"", sort:"name", q:"", hideDone:false, lowRev:false, page:1 };
+
+  var CAT_ICON = {
+    "Hotels":"🏨", "Restaurants":"🍽️", "Coffee Shops":"☕", "Car Dealers":"🚗",
+    "Sports & Fitness":"🏋️", "Pet Supplies":"🐾", "Outdoor & Camping":"🏕️",
+    "Gaming & Electronics":"🎮", "Beauty & Skincare":"💄", "Health & Wellness":"🌿",
+    "Walmart — General":"📦", "Walmart":"🛒"
+  };
+  function catIcon(c){ return CAT_ICON[c] || "📁"; }
 
   // ---------- helpers ----------
   function $(s,el){return (el||document).querySelector(s);}
@@ -628,8 +665,11 @@
       Object.keys(window.DEFAULT_LEADS.categoryMeta).forEach(function(c){
         if(!cats[c]) cats[c] = { status:"active" };
         if(!cats[c].pushedAt) cats[c].pushedAt = window.DEFAULT_LEADS.categoryMeta[c].pushedAt;
+        var g = window.DEFAULT_LEADS.categoryMeta[c].group;
+        if(g) cats[c].group = g;
       });
     }
+    groupOpen = get(LS_GROUPS, {});
     var storedPitch = get(LS_PITCH, null);
     if(storedPitch && typeof storedPitch === "object"){
       pitchByCat = storedPitch;
@@ -665,6 +705,7 @@
     return order;
   }
   function catStatus(c){ return (cats[c] && cats[c].status) || "active"; }
+  function catGroup(c){ return (cats[c] && cats[c].group) || ""; }
   function catCount(c){ var n=0; leads.forEach(function(l){ if(catOf(l)===c) n++; }); return n; }
 
   function fmtPushDate(iso){
@@ -679,7 +720,7 @@
     var pushedAt = cats[c] && cats[c].pushedAt;
     var meta = pushedAt ? '<span class="cat-meta">'+esc(fmtPushDate(pushedAt))+'</span>' : '';
     return '<div class="cat-row'+(sel?" on":"")+'">'+
-      '<button class="cat-open" data-cat="'+esc(c)+'"><span class="cat-text"><span class="cat-name">'+esc(c)+'</span>'+meta+'</span>'+
+      '<button class="cat-open" data-cat="'+esc(c)+'"><span class="cat-icon">'+catIcon(c)+'</span><span class="cat-text"><span class="cat-name">'+esc(c)+'</span>'+meta+'</span>'+
         '<span class="cat-n">'+catCount(c)+'</span></button>'+ act +
     '</div>';
   }
@@ -689,18 +730,42 @@
       '<button class="cat-open" data-cat="'+esc(cat)+'"><span class="cat-text"><span class="cat-name">'+esc(label)+'</span></span>'+
         '<span class="cat-n">'+n+'</span></button></div>';
   }
+  function groupBlock(g, members){
+    var isOpen = groupOpen[g] !== false; // default open
+    var total = members.reduce(function(n,c){ return n+catCount(c); }, 0);
+    return '<div class="cat-group'+(isOpen?" open":"")+'" data-group="'+esc(g)+'">'+
+      '<button class="cat-group-h" data-group="'+esc(g)+'">'+
+        '<span class="grp-arrow">▸</span><span class="cat-icon">'+catIcon(g)+'</span>'+
+        '<span class="cat-name">'+esc(g)+'</span><span class="cat-n">'+total+'</span>'+
+      '</button>'+
+      '<div class="cat-group-body">'+ members.map(catRow).join("") +'</div>'+
+    '</div>';
+  }
   function renderSide(){
     var order = allCats();
+    var q = sideQ.trim().toLowerCase();
+    if(q){ order = order.filter(function(c){ return c.toLowerCase().indexOf(q)>-1; }); }
     var active = order.filter(function(c){ return catStatus(c) !== "followup"; });
     var follow = order.filter(function(c){ return catStatus(c) === "followup"; });
+
+    // split active into ungrouped (flat) vs grouped (nested under a parent)
+    var ungrouped = [], groups = {}, groupNames = [];
+    active.forEach(function(c){
+      var g = catGroup(c);
+      if(!g){ ungrouped.push(c); return; }
+      if(!groups[g]){ groups[g]=[]; groupNames.push(g); }
+      groups[g].push(c);
+    });
+
     var html = navRow("", "All leads", leads.length);
     html += '<div class="side-h first">Categories</div>';
-    html += active.length ? active.map(catRow).join("") : '<div class="side-empty">— none —</div>';
+    var body = ungrouped.map(catRow).join("") + groupNames.map(function(g){ return groupBlock(g, groups[g]); }).join("");
+    html += body || (q ? '<div class="side-empty">No categories match “'+esc(sideQ)+'”</div>' : '<div class="side-empty">— none —</div>');
     if(follow.length){
       html += '<div class="side-h">Follow-up</div>';
       html += follow.map(catRow).join("");
     }
-    $("#side").innerHTML = html;
+    $("#sideList").innerHTML = html;
   }
   function renderCatHeader(){
     var el = $("#catHeader"), c = f.category;
@@ -965,8 +1030,21 @@
         setCatStatus(act.getAttribute("data-cat"), act.getAttribute("data-act")==="done" ? "followup" : "active");
         return;
       }
+      var grp = e.target.closest(".cat-group-h");
+      if(grp){
+        var g = grp.getAttribute("data-group");
+        groupOpen[g] = !(groupOpen[g] !== false); // toggle, default was open
+        set(LS_GROUPS, groupOpen);
+        renderSide();
+        return;
+      }
       var open = e.target.closest(".cat-open");
       if(open){ f.category = open.getAttribute("data-cat"); syncPitchBox(); repage(); }
+    });
+    var t;
+    $("#sideSearch").addEventListener("input", function(e){
+      sideQ = e.target.value;
+      clearTimeout(t); t = setTimeout(renderSide, 120);
     });
     $("#catHeader").addEventListener("click", function(e){
       var b = e.target.closest("#catDoneBtn"); if(!b || !f.category) return;
