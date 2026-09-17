@@ -366,6 +366,16 @@
         <button data-seg="Low rating">Low rating</button>
       </div>
       <select id="stateFilter"><option value="">All states</option></select>
+      <select id="channelFilter">
+        <option value="">Any channel</option>
+        <option value="whatsapp">Has WhatsApp</option>
+        <option value="instagram">Has Instagram</option>
+        <option value="facebook">Has Facebook</option>
+        <option value="email">Has Email</option>
+        <option value="linkedin">Has LinkedIn</option>
+        <option value="website">Has Website</option>
+        <option value="phone">Has Phone</option>
+      </select>
       <select id="sortBy">
         <option value="name">Sort: Name</option>
         <option value="rating">Sort: Rating ↑</option>
@@ -450,7 +460,17 @@
   var groupOpen = {};    // "<group name>" -> true|false (collapse state, per browser)
   var sideQ = "";        // sidebar category filter text
 
-  var f = { seg:"all", category:"", state:"", sort:"name", q:"", hideDone:false, lowRev:false, page:1 };
+  var f = { seg:"all", category:"", state:"", channel:"", sort:"name", q:"", hideDone:false, lowRev:false, page:1 };
+
+  var CHANNEL_TEST = {
+    whatsapp:function(l){ return !!waNumber(l); },
+    instagram:function(l){ return !!igLink(l); },
+    facebook:function(l){ return !!fbLink(l); },
+    email:function(l){ return !!l.email; },
+    linkedin:function(l){ return !!liLink(l); },
+    website:function(l){ return !!webLink(l); },
+    phone:function(l){ return !!telLink(l); }
+  };
 
   var CAT_ICON = {
     "Hotels":"🏨", "Restaurants":"🍽️", "Coffee Shops":"☕", "Car Dealers":"🚗",
@@ -789,6 +809,7 @@
       if(f.seg!=="all" && l.segment!==f.seg) return false;
       if(f.category && catOf(l)!==f.category) return false;
       if(f.state && l.state!==f.state) return false;
+      if(f.channel && CHANNEL_TEST[f.channel] && !CHANNEL_TEST[f.channel](l)) return false;
       if(f.lowRev && !(l.reviews!=null && l.reviews<REVIEW_MIN)) return false;
       if(f.hideDone && done[leadId(l)]) return false;
       if(q){
@@ -854,6 +875,12 @@
   function mailLink(l){
     if(!l.email) return "";
     return "mailto:"+l.email+"?subject="+encodeURIComponent("Quick idea for "+(l.name||"your business"))+"&body="+encodeURIComponent(buildMessage(l));
+  }
+  function mailGmailLink(l){
+    if(!l.email) return "";
+    return "https://mail.google.com/mail/?view=cm&fs=1&tf=1&to="+encodeURIComponent(l.email)+
+      "&su="+encodeURIComponent("Quick idea for "+(l.name||"your business"))+
+      "&body="+encodeURIComponent(buildMessage(l));
   }
   function telLink(l){ var n=(l.phone.match(/[\d+]+/g)||[]).join(""); return n ? "tel:"+n : ""; }
   function channelLink(l, ch){
@@ -977,11 +1004,35 @@
   function repage(){ f.page = 1; render(); }
 
   // ---------- events: grid ----------
+  var CHANNEL_MSG_COPY = { wa:1, fb:1, ig:1, li:1, tw:1, yt:1, tt:1 };
   function onGridClick(e){
     var a = e.target.closest("a.a");
     if(a){
       var id = a.getAttribute("data-id"), ch = a.getAttribute("data-ch");
       log[id+"::"+ch] = true; a.classList.add("used"); save();
+      var lead = leads.find(function(x){ return leadId(x) === id; });
+      if(ch === "mail"){
+        e.preventDefault();
+        if(!lead) return;
+        // open synchronously (same tick as the click) so popup blockers don't kill it
+        var win = window.open(mailGmailLink(lead), "_blank");
+        var label = a.innerHTML;
+        copyText(lead.email, function(ok){
+          a.innerHTML = win
+            ? '<span class="dot"></span>' + (ok ? "Email copied, Gmail opened" : "Gmail opened")
+            : '<span class="dot"></span>Popup blocked — allow popups';
+          setTimeout(function(){ a.innerHTML = label; }, 2000);
+        });
+        return;
+      }
+      if(lead && CHANNEL_MSG_COPY[ch]){
+        var label2 = a.innerHTML;
+        copyText(buildMessage(lead), function(ok){
+          if(!ok) return;
+          a.innerHTML = '<span class="dot"></span>Message copied ✓';
+          setTimeout(function(){ a.innerHTML = label2; }, 1500);
+        });
+      }
       return;
     }
     var copy = e.target.closest(".copyMsg");
@@ -1074,6 +1125,7 @@
       b.classList.add("on"); f.seg = b.getAttribute("data-seg"); repage();
     });
     $("#stateFilter").addEventListener("change", function(){ f.state=this.value; repage(); });
+    $("#channelFilter").addEventListener("change", function(){ f.channel=this.value; repage(); });
     $("#sortBy").addEventListener("change", function(){ f.sort=this.value; repage(); });
     $("#lowRevOnly").addEventListener("change", function(){ f.lowRev=this.checked; repage(); });
     $("#hideDone").addEventListener("change", function(){ f.hideDone=this.checked; repage(); });
