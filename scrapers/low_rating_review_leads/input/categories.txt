@@ -1,0 +1,18 @@
+# CATEGORIES — one search term per line. Each is paired with every line in
+# states.txt and searched as "<category> in <state>".
+# Lines starting with #, and blank lines, are ignored. Edit freely.
+
+hotels
+restaurants
+coffee shops
+
+# More you can turn on later (delete the # to activate):
+# motels
+# bed and breakfast
+# cafes
+# 
+# diners
+# bars
+# pizza restaurants
+# fast food restaurants
+# catering services

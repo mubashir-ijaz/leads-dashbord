@@ -1,0 +1,16 @@
+# Shared dependencies for the scrapers in this suite.
+requests>=2.31
+tldextract>=5.0
+openpyxl>=3.1
+tqdm>=4.66
+colorama>=0.4
+
+# Email / social-handle scraper (engine).
+httpx>=0.27
+parsel>=1.9
+urllib3>=2.0
+
+# Only needed for the Link Collector when COLLECTOR = "playwright" in
+# scrapers/link_collector/settings.py. After installing, also run:
+#   playwright install chromium
+playwright>=1.40

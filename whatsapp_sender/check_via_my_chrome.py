@@ -142,10 +142,16 @@ def get_driver(attach_only):
     try:
         driver = webdriver.Chrome(options=opts)
     except Exception as e:  # noqa: BLE001
+        bat = config.HERE / "start_chrome_debug.bat"
         sys.exit(
             f"Could not start Chrome with your profile ({e.__class__.__name__}).\n"
-            "Make sure every Chrome window is closed, then retry.\n"
-            "Details: " + str(e).splitlines()[0]
+            "Recent Chrome versions block launching it this way against your real\n"
+            "profile (this is what 'session not created' with no other detail means).\n\n"
+            "Use option B instead - it works around that restriction:\n"
+            f'  1. Double-click  "{bat}"\n'
+            "  2. Then run this script again (it will auto-attach to that Chrome)\n"
+            "     or pass --attach.\n\n"
+            "Full error:\n" + str(e)
         )
     return driver, True
 

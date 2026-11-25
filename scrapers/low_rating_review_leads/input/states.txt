@@ -1,0 +1,61 @@
+# LOCATIONS — one per line. Paired with every line in categories.txt and
+# searched as "<category> in <this line>".
+# Lines starting with #, and blank lines, are ignored.
+#
+# All 50 US states below. "New York State" / "Washington State" are spelled
+# that way on purpose so Google centres on the whole state, not the city.
+# For deeper coverage, replace a state with specific cities, e.g.:
+#   Houston, TX
+#   Dallas, TX
+#   Austin, TX
+
+Alabama
+Alaska
+Arizona
+Arkansas
+California
+Colorado
+Connecticut
+Delaware
+Florida
+Georgia
+Hawaii
+Idaho
+Illinois
+Indiana
+Iowa
+Kansas
+Kentucky
+Louisiana
+Maine
+Maryland
+Massachusetts
+Michigan
+Minnesota
+Mississippi
+Missouri
+Montana
+Nebraska
+Nevada
+New Hampshire
+New Jersey
+New Mexico
+New York State
+North Carolina
+North Dakota
+Ohio
+Oklahoma
+Oregon
+Pennsylvania
+Rhode Island
+South Carolina
+South Dakota
+Tennessee
+Texas
+Utah
+Vermont
+Virginia
+Washington State
+West Virginia
+Wisconsin
+Wyoming
